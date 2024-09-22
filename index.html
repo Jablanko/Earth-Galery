@@ -1,5 +1,5 @@
-<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
-<html lang="hr">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta name="google-site-verification" content="-NnDuavkkItxtLDRgxdwKEfoKYHlqFeusyV9KSXIg_g" />
     <meta charset="UTF-8">
@@ -26,7 +26,31 @@
         #uploadSection {
             margin: 20px;
         }
-        /* Thumbnail stil */
+        #bookIcon {
+            font-size: 36px; /* Adjust size as needed */
+            cursor: pointer;
+            margin: 20px auto; /* Center the emoji */
+        }
+        #infoText {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            overflow-y: auto; /* Allow scrolling */
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center; /* Center text */
+        }
+        #closeText {
+            color: white;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        /* Thumbnail style */
         #thumbnail {
             width: 200px;
             height: 200px;
@@ -35,7 +59,7 @@
             cursor: pointer;
             margin: 20px auto;
         }
-        /* Stil za veliki prikaz slika u gridu */
+        /* Lightbox styles */
         #lightbox {
             position: fixed;
             top: 0;
@@ -49,7 +73,6 @@
             overflow-y: scroll;
             padding: 20px;
         }
-        /* Grid stil za slike */
         #lightbox img {
             width: calc(50% - 20px);
             height: auto;
@@ -68,12 +91,6 @@
             cursor: pointer;
             font-size: 16px;
         }
-        #lightbox {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-            padding-left: 1px;
-        }
         input[type="file"] {
             padding: 0px;
             background-color: #444;
@@ -83,7 +100,6 @@
             border-radius: 5px;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.0/purify.min.js"></script>
 </head>
 <body>
 
@@ -91,8 +107,21 @@
     Welcome to Our World Gallery
 </header>
 
+<div id="bookIcon" onclick="showInfo()">
+    📖
+</div>
+
 <div id="uploadSection">
     <input type="file" id="fileInput" accept="image/*" multiple>
+</div>
+
+<div id="infoText">
+    <span id="closeText" onclick="closeInfo()">X Close</span>
+    <p>
+        <strong>Welcome to Our World Gallery!</strong><br>
+        
+        In here anyone can upload and view images without a filter. Every image someone enters will be stored in the folder below and can be viewed by everyone. This website is an expiriment that will last a month and after that all pictures will be deleted from the website. You are viewing at your own responsibility.
+    </p>
 </div>
 
 <img id="thumbnail" src="" alt="Enter any image you want" onclick="showGallery()">
@@ -104,6 +133,7 @@
 <script>
     const gallery = document.getElementById('lightbox');
     const thumbnail = document.getElementById('thumbnail');
+    const infoText = document.getElementById('infoText');
 
     function showGallery() {
         gallery.style.display = 'flex';
@@ -113,8 +143,16 @@
         gallery.style.display = 'none';
     }
 
+    function showInfo() {
+        infoText.style.display = 'block';
+    }
+
+    function closeInfo() {
+        infoText.style.display = 'none';
+    }
+
     window.onload = function() {
-        gallery.style.display = 'flex'; // Prikaz prozora odmah
+        gallery.style.display = 'flex'; // Show the window immediately
 
         const storedImages = JSON.parse(localStorage.getItem('images')) || [];
         storedImages.forEach(src => addImageToLightbox(src));
@@ -124,7 +162,7 @@
             setInterval(updateThumbnail, 300000);
         }
 
-        // Odmah zatvori prozor
+        // Immediately close the window
         closeGallery();
     };
 
@@ -132,11 +170,11 @@
         const img = document.createElement('img');
         img.src = src;
         img.style.pointerEvents = 'none';
-        gallery.prepend(img); // Dodaj sliku na početak
+        gallery.prepend(img); // Add image to the start
     }
 
     async function scanImage(imageData) {
-        const apiKey = 'YOUR_API_KEY'; // Zamijeni sa svojim API ključem
+        const apiKey = 'YOUR_API_KEY'; // Replace with your API key
         const url = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
         const body = {
             requests: [{
@@ -168,15 +206,14 @@
             reader.onload = async function(e) {
                 const src = e.target.result;
 
-                // Pozovi funkciju za skeniranje slike
+                // Call the image scanning function
                 const detections = await scanImage(src);
                 
-                // Ovdje možeš dodati logiku za provjeru neprimjerenog sadržaja
-                // Ako je sve u redu, dodaj sliku
+                // You can add logic here to check for inappropriate content
+                // If everything is okay, add the image
 
-                const safeSrc = DOMPurify.sanitize(src); // Sanitiziraj ulaz
-                addImageToLightbox(safeSrc);
-                storedImages.push(safeSrc);
+                addImageToLightbox(src);
+                storedImages.push(src);
                 localStorage.setItem('images', JSON.stringify(storedImages));
             };
             reader.readAsDataURL(file);
