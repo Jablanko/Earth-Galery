@@ -72,9 +72,10 @@
             align-items: flex-start;
             overflow-y: scroll;
             padding: 20px;
+            flex-wrap: wrap; /* Wrap images to fit in multiple rows */
         }
         #lightbox img {
-            width: calc(50% - 20px);
+            width: calc(50% - 20px); /* Each image takes half the width minus margin */
             height: auto;
             margin: 10px;
             border-radius: 8px;
@@ -120,7 +121,7 @@
     <p>
         <strong>Welcome to Our World Gallery!</strong><br>
         
-        In here anyone can upload and view images without a filter. Every image someone enters will be stored in the folder below and can be viewed by everyone. This website is an expiriment that will last a month and after that all pictures will be deleted from the website. You are viewing at your own responsibility.
+        In here anyone can upload and view images without a filter. Every image someone enters will be stored in the folder below and can be viewed by everyone. This website is an experiment that will last a month and after that all pictures will be deleted from the website. You are viewing at your own responsibility.
     </p>
 </div>
 
@@ -154,74 +155,51 @@
     window.onload = function() {
         gallery.style.display = 'flex'; // Show the window immediately
 
+        // Load the stored images from localStorage on page load
         const storedImages = JSON.parse(localStorage.getItem('images')) || [];
         storedImages.forEach(src => addImageToLightbox(src));
 
         if (storedImages.length > 0) {
             updateThumbnail();
-            setInterval(updateThumbnail, 300000);
         }
 
         // Immediately close the window
         closeGallery();
     };
 
+    // Function to add an image to the lightbox
     function addImageToLightbox(src) {
         const img = document.createElement('img');
         img.src = src;
         img.style.pointerEvents = 'none';
-        gallery.prepend(img); // Add image to the start
+        gallery.prepend(img); // Add image to the start of the gallery
     }
 
-    async function scanImage(imageData) {
-        const apiKey = 'YOUR_API_KEY'; // Replace with your API key
-        const url = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
-        const body = {
-            requests: [{
-                image: {
-                    content: imageData.split(',')[1]
-                },
-                features: [{
-                    type: 'LABEL_DETECTION',
-                    maxResults: 10
-                }]
-            }]
-        };
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        
-        return response.json();
-    }
-
+    // Handle image uploads
     document.getElementById('fileInput').addEventListener('change', async function(event) {
         const files = event.target.files;
         const storedImages = JSON.parse(localStorage.getItem('images')) || [];
         
-        Array.from(files).forEach(async file => {
+        Array.from(files).forEach(file => {
             const reader = new FileReader();
-            reader.onload = async function(e) {
+            reader.onload = function(e) {
                 const src = e.target.result;
 
-                // Call the image scanning function
-                const detections = await scanImage(src);
-                
-                // You can add logic here to check for inappropriate content
-                // If everything is okay, add the image
-
+                // Add the image to the lightbox
                 addImageToLightbox(src);
+
+                // Save the image in localStorage
                 storedImages.push(src);
                 localStorage.setItem('images', JSON.stringify(storedImages));
             };
             reader.readAsDataURL(file);
         });
 
+        // Update the thumbnail after adding new images
         updateThumbnail();
     });
 
+    // Update the thumbnail to show a random image from the gallery
     function updateThumbnail() {
         const storedImages = JSON.parse(localStorage.getItem('images')) || [];
         if (storedImages.length > 0) {
@@ -230,6 +208,7 @@
         }
     }
 
+    // Disable context menu on gallery images to prevent saving
     gallery.addEventListener('contextmenu', function(e) {
         e.preventDefault();
     });
